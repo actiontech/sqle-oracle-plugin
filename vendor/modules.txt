@@ -1,4 +1,4 @@
-# github.com/actiontech/sqle v1.2111.0-pre2.0.20211118101025-1f63ff3d029a
+# github.com/actiontech/sqle v1.2111.0-pre3
 ## explicit
 github.com/actiontech/sqle/sqle/driver
 github.com/actiontech/sqle/sqle/driver/proto
