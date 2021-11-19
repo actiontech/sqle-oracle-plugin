@@ -3,7 +3,7 @@ module github.com/actiontech/sqle-oracle-plugin
 go 1.16
 
 require (
-	github.com/actiontech/sqle v1.2111.0-pre2.0.20211118101025-1f63ff3d029a
+	github.com/actiontech/sqle v1.2111.0-pre3
 	github.com/denisenkom/go-mssqldb v0.11.0 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/golang/glog v1.0.0 // indirect
