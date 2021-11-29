@@ -18,4 +18,4 @@ docker_install:
 	$(DOCKER) run -v $(shell pwd):/universe --rm $(GO_COMPILER_IMAGE) sh -c "cd /universe && make install $(MAKEFLAGS)"
 
 upload:
-	curl -T $(shell pwd)/$(GOBIN)/$(PROJECT_NAME) ftp://$(RELEASE_FTPD_HOST)/actiontech-sqle/plugins/$(PROJECT_VERSION)/$(PROJECT_NAME) --ftp-create-dirs
+	curl -T $(GOBIN)/$(PROJECT_NAME) ftp://$(RELEASE_FTPD_HOST)/actiontech-sqle/plugins/$(PROJECT_VERSION)/$(PROJECT_NAME) --ftp-create-dirs
