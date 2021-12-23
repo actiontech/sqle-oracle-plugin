@@ -60,6 +60,89 @@ var ruleLevelMap = map[RuleLevel]int{
 	RuleLevelError:  3,
 }
 
+type RuleParamType string
+
+const (
+	RuleParamTypeString RuleParamType = "string"
+	RuleParamTypeInt    RuleParamType = "int"
+	RuleParamTypeBool   RuleParamType = "bool"
+)
+
+type RuleParam struct {
+	Key   string        `json:"key"`
+	Value string        `json:"value"`
+	Desc  string        `json:"desc"`
+	Type  RuleParamType `json:"type"`
+}
+
+type RuleParams []*RuleParam
+
+func (r *RuleParams) SetParamValue(key, value string) error {
+	paramNotFoundErrMsg := "param %s not found"
+	if r == nil {
+		return fmt.Errorf(paramNotFoundErrMsg, key)
+	}
+	for _, p := range *r {
+		var err error
+		if p.Key == key {
+			switch p.Type {
+			case RuleParamTypeBool:
+				_, err = strconv.ParseBool(value)
+			case RuleParamTypeInt:
+				_, err = strconv.Atoi(value)
+			default:
+			}
+			if err != nil {
+				return fmt.Errorf("param %s value don't match \"%s\"", key, p.Type)
+			}
+			p.Value = value
+			return nil
+		}
+	}
+	return fmt.Errorf(paramNotFoundErrMsg, key)
+}
+
+func (r *RuleParams) GetParam(key string) *RuleParam {
+	if r == nil {
+		return nil
+	}
+	for _, p := range *r {
+		if p.Key == key {
+			return p
+		}
+	}
+	return nil
+}
+
+func (r *RuleParam) String() string {
+	if r == nil {
+		return ""
+	}
+	return r.Value
+}
+
+func (r *RuleParam) Int() int {
+	if r == nil {
+		return 0
+	}
+	i, err := strconv.Atoi(r.Value)
+	if err != nil {
+		return 0
+	}
+	return i
+}
+
+func (r *RuleParam) Bool() bool {
+	if r == nil {
+		return false
+	}
+	b, err := strconv.ParseBool(r.Value)
+	if err != nil {
+		return false
+	}
+	return b
+}
+
 type Rule struct {
 	Name string
 	Desc string
@@ -67,32 +150,44 @@ type Rule struct {
 	// Category is the category of the rule. Such as "Naming Conventions"...
 	// Rules will be displayed on the SQLE rule list page by category.
 	Category string
-
-	Level RuleLevel
-	Value string
+	Level    RuleLevel
+	Params   RuleParams
 }
 
-func (r *Rule) GetValueInt(defaultRule *Rule) int64 {
-	value := r.GetValue()
-	i, err := strconv.ParseInt(value, 10, 64)
-	if err == nil {
-		return i
-	}
-	i, err = strconv.ParseInt(defaultRule.GetValue(), 10, 64)
-	if err == nil {
-		return i
-	}
-	return 0
-}
+//func (r *Rule) GetValueInt(defaultRule *Rule) int64 {
+//	value := r.getValue(DefaultSingleParamKeyName, defaultRule)
+//	i, err := strconv.ParseInt(value, 10, 64)
+//	if err != nil {
+//		return 0
+//	}
+//	return i
+//}
+//
+//func (r *Rule) GetSingleValue() string {
+//	value, _ := r.Params.GetParamValue(DefaultSingleParamKeyName)
+//	return value
+//}
+//
+//func (r *Rule) GetSingleValueInt() int {
+//	value := r.GetSingleValue()
+//	i, err := strconv.Atoi(value)
+//	if err != nil {
+//		return 0
+//	}
+//	return i
+//}
 
-func (r *Rule) GetValue() string {
-	if r == nil {
-		return ""
-	}
-	return r.Value
-}
+//func (r *Rule) getValue(key string, defaultRule *Rule) string {
+//	var value string
+//	var exist bool
+//	value, exist = r.Params.GetParamValue(key)
+//	if !exist {
+//		value, _ = defaultRule.Params.GetParamValue(key)
+//	}
+//	return value
+//}
 
-// Config difine the configuration for driver.
+// Config define the configuration for driver.
 type Config struct {
 	DSN   *DSN
 	Rules []*Rule
@@ -101,7 +196,7 @@ type Config struct {
 // NewConfig return a config for driver.
 //
 // 1. dsn is nil, rules is not nil. Use drive to do Offline Audit.
-// 2. dsn is not nil, rule is nil. Use drive to communicate with databse only.
+// 2. dsn is not nil, rule is nil. Use drive to communicate with database only.
 // 3. dsn is not nil, rule is not nil. Most common usecase.
 func NewConfig(dsn *DSN, rules []*Rule) (*Config, error) {
 	if dsn == nil && rules == nil {
@@ -139,11 +234,11 @@ func Register(name string, h handler, rs []*Rule) {
 	rulesMu.Unlock()
 }
 
-type ErrDriverNotSupported struct {
+type DriverNotSupportedError struct {
 	DriverTyp string
 }
 
-func (e *ErrDriverNotSupported) Error() string {
+func (e *DriverNotSupportedError) Error() string {
 	return fmt.Sprintf("driver type %v is not supported", e.DriverTyp)
 }
 
@@ -184,7 +279,7 @@ var ErrNodesCountExceedOne = errors.New("after parse, nodes count exceed one")
 // It's implementation maybe on the same process or over gRPC(by go-plugin).
 //
 // Driver is responsible for two primary things:
-// 1. privode handle to communicate with database
+// 1. provides handle to communicate with database
 // 2. audit SQL with rules
 type Driver interface {
 	Close(ctx context.Context)

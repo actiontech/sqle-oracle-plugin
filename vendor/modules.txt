@@ -1,4 +1,4 @@
-# github.com/actiontech/sqle v1.2111.0
+# github.com/actiontech/sqle v1.2112.0-pre3.0.20211221052644-26511be32375
 ## explicit
 github.com/actiontech/sqle/sqle/driver
 github.com/actiontech/sqle/sqle/driver/proto
@@ -17,6 +17,8 @@ github.com/dgrijalva/jwt-go
 # github.com/fatih/color v1.13.0
 ## explicit
 github.com/fatih/color
+# github.com/go-playground/validator v9.31.0+incompatible
+## explicit
 # github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe
 github.com/golang-sql/civil
 # github.com/golang/glog v1.0.0
