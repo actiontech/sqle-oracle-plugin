@@ -13,3 +13,6 @@ The binary file is located in `bin/` folder, and you can use it to audit your da
 
 ### 3. Begin to use
 More details please refer to [docs](https://actiontech.github.io/sqle-docs-cn/3.modules/3.7_auditplugin/auditplugin_management.html).
+
+### 4. Note:
+1. the plugin using Oracle SQL driver ([go-ora](https://github.com/sijms/go-ora) v2), it is more preferred for oracle servers 10.2 and above.
