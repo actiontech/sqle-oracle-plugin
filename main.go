@@ -13,6 +13,24 @@ import (
 var version string
 var printVersion = flag.Bool("version", false, "Print version & exit")
 
+type OracleDialector struct {}
+
+func (d *OracleDialector) Dialect(dsn *driver.DSN) (string, string) {
+	if dsn.DatabaseName == "" {
+		dsn.DatabaseName = "xe"
+	}
+	return "oracle", fmt.Sprintf("oracle://%s:%s@%s:%s/%s",
+		dsn.User, dsn.Password, dsn.Host, dsn.Port, dsn.DatabaseName)
+}
+
+func (d *OracleDialector) String() string {
+	return "Oracle"
+}
+
+func (d *OracleDialector) ShowDatabaseSQL() string {
+	return "select global_name from global_name"
+}
+
 func main() {
 	flag.Parse()
 
@@ -21,7 +39,7 @@ func main() {
 		return
 	}
 
-	plugin := adaptor.NewAdaptor(&adaptor.OracleDialector{})
+	plugin := adaptor.NewAdaptor(&OracleDialector{})
 
 	aviodSelectAllColumn := &driver.Rule{
 		Name:     "aviod_select_all_column",
