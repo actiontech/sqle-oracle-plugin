@@ -8,12 +8,13 @@ import (
 
 	"github.com/actiontech/sqle/sqle/driver"
 	adaptor "github.com/actiontech/sqle/sqle/pkg/driver"
+	_ "github.com/sijms/go-ora/v2"
 )
 
 var version string
 var printVersion = flag.Bool("version", false, "Print version & exit")
 
-type OracleDialector struct {}
+type OracleDialector struct{}
 
 func (d *OracleDialector) Dialect(dsn *driver.DSN) (string, string) {
 	if dsn.DatabaseName == "" {
