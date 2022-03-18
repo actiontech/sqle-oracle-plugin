@@ -7,30 +7,11 @@ import (
 	"strings"
 
 	"github.com/actiontech/sqle/sqle/driver"
-	adaptor "github.com/actiontech/sqle/sqle/pkg/driver"
 	_ "github.com/sijms/go-ora/v2"
 )
 
 var version string
 var printVersion = flag.Bool("version", false, "Print version & exit")
-
-type OracleDialector struct{}
-
-func (d *OracleDialector) Dialect(dsn *driver.DSN) (string, string) {
-	if dsn.DatabaseName == "" {
-		dsn.DatabaseName = "xe"
-	}
-	return "oracle", fmt.Sprintf("oracle://%s:%s@%s:%s/%s",
-		dsn.User, dsn.Password, dsn.Host, dsn.Port, dsn.DatabaseName)
-}
-
-func (d *OracleDialector) String() string {
-	return "Oracle"
-}
-
-func (d *OracleDialector) ShowDatabaseSQL() string {
-	return "select global_name from global_name"
-}
 
 func main() {
 	flag.Parse()
@@ -39,8 +20,6 @@ func main() {
 		fmt.Println(version)
 		return
 	}
-
-	plugin := adaptor.NewAdaptor(&OracleDialector{})
 
 	aviodSelectAllColumn := &driver.Rule{
 		Name:     "aviod_select_all_column",
@@ -54,6 +33,7 @@ func main() {
 		}
 		return "", nil
 	}
-	plugin.AddRule(aviodSelectAllColumn, aviodSelectAllColumnHandler)
-	plugin.Serve()
+	AddRule(aviodSelectAllColumn, aviodSelectAllColumnHandler)
+
+	driver.ServePlugin(&OracleDriverImpl{}, NewDriver)
 }
