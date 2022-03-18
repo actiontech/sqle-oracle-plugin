@@ -10,21 +10,21 @@ import (
 
 	"github.com/actiontech/sqle/sqle/driver/proto"
 	"github.com/actiontech/sqle/sqle/log"
-	"github.com/pingcap/errors"
-
+	"github.com/actiontech/sqle/sqle/pkg/params"
 	goPlugin "github.com/hashicorp/go-plugin"
+	"github.com/pingcap/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
 
 func convertRuleFromProtoToDriver(rule *proto.Rule) *Rule {
-	var params = make(RuleParams, 0, len(rule.Params))
+	var ps = make(params.Params, 0, len(rule.Params))
 	for _, p := range rule.Params {
-		params = append(params, &RuleParam{
+		ps = append(ps, &params.Param{
 			Key:   p.Key,
 			Value: p.Value,
 			Desc:  p.Desc,
-			Type:  RuleParamType(p.Type),
+			Type:  params.ParamType(p.Type),
 		})
 	}
 	return &Rule{
@@ -32,7 +32,7 @@ func convertRuleFromProtoToDriver(rule *proto.Rule) *Rule {
 		Category: rule.Category,
 		Desc:     rule.Desc,
 		Level:    RuleLevel(rule.Level),
-		Params:   params,
+		Params:   ps,
 	}
 }
 
@@ -142,10 +142,11 @@ func InitPlugins(pluginDir string) error {
 			}
 			if config.DSN != nil {
 				initRequest.Dsn = &proto.DSN{
-					Host:     config.DSN.Host,
-					Port:     config.DSN.Port,
-					User:     config.DSN.User,
-					Password: config.DSN.Password,
+					Host:             config.DSN.Host,
+					Port:             config.DSN.Port,
+					User:             config.DSN.User,
+					Password:         config.DSN.Password,
+					AdditionalParams: proto.ConvertParamToProtoParam(config.DSN.AdditionalParams),
 
 					// database is to open.
 					Database: config.DSN.DatabaseName,
@@ -160,7 +161,7 @@ func InitPlugins(pluginDir string) error {
 
 		}
 
-		Register(pluginMeta.Name, handler, driverRules)
+		Register(pluginMeta.Name, handler, driverRules, proto.ConvertProtoParamToParam(pluginMeta.GetAdditionalParams()))
 
 		log.Logger().WithFields(logrus.Fields{
 			"plugin_name": pluginMeta.Name,
@@ -330,11 +331,12 @@ func (d *driverGRPCServer) Init(ctx context.Context, req *proto.InitRequest) (*p
 	var dsn *DSN
 	if req.GetDsn() != nil {
 		dsn = &DSN{
-			Host:         req.GetDsn().GetHost(),
-			Port:         req.GetDsn().GetPort(),
-			User:         req.GetDsn().GetUser(),
-			Password:     req.GetDsn().GetPassword(),
-			DatabaseName: req.GetDsn().GetDatabase(),
+			Host:             req.GetDsn().GetHost(),
+			Port:             req.GetDsn().GetPort(),
+			User:             req.GetDsn().GetUser(),
+			Password:         req.GetDsn().GetPassword(),
+			DatabaseName:     req.GetDsn().GetDatabase(),
+			AdditionalParams: proto.ConvertProtoParamToParam(req.GetDsn().GetAdditionalParams()),
 		}
 	}
 
@@ -455,8 +457,9 @@ func (d *driverGRPCServer) Metas(ctx context.Context, req *proto.Empty) (*proto.
 	}
 
 	return &proto.MetasResponse{
-		Name:  d.r.Name(),
-		Rules: protoRules,
+		Name:             d.r.Name(),
+		Rules:            protoRules,
+		AdditionalParams: proto.ConvertParamToProtoParam(d.r.AdditionalParams()),
 	}, nil
 }
 

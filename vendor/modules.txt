@@ -1,9 +1,10 @@
-# github.com/actiontech/sqle v1.2112.0-pre3.0.20211221052644-26511be32375
+# github.com/actiontech/sqle v1.2203.0-pre2
 ## explicit
 github.com/actiontech/sqle/sqle/driver
 github.com/actiontech/sqle/sqle/driver/proto
 github.com/actiontech/sqle/sqle/log
 github.com/actiontech/sqle/sqle/pkg/driver
+github.com/actiontech/sqle/sqle/pkg/params
 github.com/actiontech/sqle/sqle/utils
 # github.com/denisenkom/go-mssqldb v0.11.0
 ## explicit
@@ -12,13 +13,13 @@ github.com/denisenkom/go-mssqldb/internal/cp
 github.com/denisenkom/go-mssqldb/internal/decimal
 github.com/denisenkom/go-mssqldb/internal/querytext
 github.com/denisenkom/go-mssqldb/msdsn
-# github.com/dgrijalva/jwt-go v3.2.0+incompatible
-github.com/dgrijalva/jwt-go
 # github.com/fatih/color v1.13.0
 ## explicit
 github.com/fatih/color
 # github.com/go-playground/validator v9.31.0+incompatible
 ## explicit
+# github.com/golang-jwt/jwt v3.2.2+incompatible
+github.com/golang-jwt/jwt
 # github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe
 github.com/golang-sql/civil
 # github.com/golang/glog v1.0.0
@@ -80,6 +81,7 @@ github.com/pingcap/errors
 # github.com/pkg/errors v0.9.1
 github.com/pkg/errors
 # github.com/sijms/go-ora/v2 v2.2.15
+## explicit
 github.com/sijms/go-ora/v2
 github.com/sijms/go-ora/v2/advanced_nego
 github.com/sijms/go-ora/v2/converters
