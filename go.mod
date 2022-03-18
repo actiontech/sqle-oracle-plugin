@@ -3,7 +3,7 @@ module github.com/actiontech/sqle-oracle-plugin
 go 1.16
 
 require (
-	github.com/actiontech/sqle v1.2112.0-pre3.0.20211221052644-26511be32375
+	github.com/actiontech/sqle v1.2203.0-pre2
 	github.com/denisenkom/go-mssqldb v0.11.0 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/go-playground/validator v9.31.0+incompatible // indirect
@@ -14,6 +14,7 @@ require (
 	github.com/mattn/go-colorable v0.1.11 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
 	github.com/oklog/run v1.1.0 // indirect
+	github.com/sijms/go-ora/v2 v2.2.15
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871 // indirect

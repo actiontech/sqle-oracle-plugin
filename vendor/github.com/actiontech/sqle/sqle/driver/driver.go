@@ -5,10 +5,10 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 	"sync"
 
+	"github.com/actiontech/sqle/sqle/pkg/params"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -21,6 +21,10 @@ var (
 	// rules store audit rules for each driver.
 	rules   map[string][]*Rule
 	rulesMu sync.RWMutex
+
+	// additionalParams store driver additional params
+	additionalParams   map[string]params.Params
+	additionalParamsMu sync.RWMutex
 )
 
 const (
@@ -35,10 +39,11 @@ const (
 
 // DSN provide necessary information to connect to database.
 type DSN struct {
-	Host     string
-	Port     string
-	User     string
-	Password string
+	Host             string
+	Port             string
+	User             string
+	Password         string
+	AdditionalParams params.Params
 
 	// DatabaseName is the default database to connect.
 	DatabaseName string
@@ -60,87 +65,12 @@ var ruleLevelMap = map[RuleLevel]int{
 	RuleLevelError:  3,
 }
 
-type RuleParamType string
-
-const (
-	RuleParamTypeString RuleParamType = "string"
-	RuleParamTypeInt    RuleParamType = "int"
-	RuleParamTypeBool   RuleParamType = "bool"
-)
-
-type RuleParam struct {
-	Key   string        `json:"key"`
-	Value string        `json:"value"`
-	Desc  string        `json:"desc"`
-	Type  RuleParamType `json:"type"`
+func (r RuleLevel) LessOrEqual(l RuleLevel) bool {
+	return ruleLevelMap[r] <= ruleLevelMap[l]
 }
 
-type RuleParams []*RuleParam
-
-func (r *RuleParams) SetParamValue(key, value string) error {
-	paramNotFoundErrMsg := "param %s not found"
-	if r == nil {
-		return fmt.Errorf(paramNotFoundErrMsg, key)
-	}
-	for _, p := range *r {
-		var err error
-		if p.Key == key {
-			switch p.Type {
-			case RuleParamTypeBool:
-				_, err = strconv.ParseBool(value)
-			case RuleParamTypeInt:
-				_, err = strconv.Atoi(value)
-			default:
-			}
-			if err != nil {
-				return fmt.Errorf("param %s value don't match \"%s\"", key, p.Type)
-			}
-			p.Value = value
-			return nil
-		}
-	}
-	return fmt.Errorf(paramNotFoundErrMsg, key)
-}
-
-func (r *RuleParams) GetParam(key string) *RuleParam {
-	if r == nil {
-		return nil
-	}
-	for _, p := range *r {
-		if p.Key == key {
-			return p
-		}
-	}
-	return nil
-}
-
-func (r *RuleParam) String() string {
-	if r == nil {
-		return ""
-	}
-	return r.Value
-}
-
-func (r *RuleParam) Int() int {
-	if r == nil {
-		return 0
-	}
-	i, err := strconv.Atoi(r.Value)
-	if err != nil {
-		return 0
-	}
-	return i
-}
-
-func (r *RuleParam) Bool() bool {
-	if r == nil {
-		return false
-	}
-	b, err := strconv.ParseBool(r.Value)
-	if err != nil {
-		return false
-	}
-	return b
+func (r RuleLevel) More(l RuleLevel) bool {
+	return ruleLevelMap[r] > ruleLevelMap[l]
 }
 
 type Rule struct {
@@ -151,7 +81,7 @@ type Rule struct {
 	// Rules will be displayed on the SQLE rule list page by category.
 	Category string
 	Level    RuleLevel
-	Params   RuleParams
+	Params   params.Params
 }
 
 //func (r *Rule) GetValueInt(defaultRule *Rule) int64 {
@@ -216,7 +146,7 @@ type handler func(log *logrus.Entry, c *Config) (Driver, error)
 //
 // Register makes a database driver available by the provided driver name.
 // Driver's initialize handler and audit rules register by Register.
-func Register(name string, h handler, rs []*Rule) {
+func Register(name string, h handler, rs []*Rule, ap params.Params) {
 	_, exist := drivers[name]
 	if exist {
 		panic("duplicated driver name")
@@ -232,6 +162,13 @@ func Register(name string, h handler, rs []*Rule) {
 	}
 	rules[name] = rs
 	rulesMu.Unlock()
+
+	additionalParamsMu.Lock()
+	if additionalParams == nil {
+		additionalParams = make(map[string]params.Params)
+	}
+	additionalParams[name] = ap
+	additionalParamsMu.Unlock()
 }
 
 type DriverNotSupportedError struct {
@@ -270,6 +207,17 @@ func AllDrivers() []string {
 		driverNames = append(driverNames, n)
 	}
 	return driverNames
+}
+
+func AllAdditionalParams() map[string] /*driver name*/ params.Params {
+	additionalParamsMu.RLock()
+	defer additionalParamsMu.RUnlock()
+
+	newParams := map[string]params.Params{}
+	for k, v := range additionalParams {
+		newParams[k] = v.Copy()
+	}
+	return newParams
 }
 
 var ErrNodesCountExceedOne = errors.New("after parse, nodes count exceed one")
@@ -319,6 +267,9 @@ type Registerer interface {
 
 	// Rules returns all rules that plugin supported.
 	Rules() []*Rule
+
+	// AdditionalParams returns all additional params that plugin supported.
+	AdditionalParams() params.Params
 }
 
 // Node is a interface which unify SQL ast tree. It produce by Driver.Parse.
@@ -396,4 +347,8 @@ func (rs *AuditResult) Add(level RuleLevel, message string, args ...interface{})
 		level:   level,
 		message: fmt.Sprintf(message, args...),
 	})
+}
+
+func (rs *AuditResult) HasResult() bool {
+	return len(rs.results) != 0
 }
