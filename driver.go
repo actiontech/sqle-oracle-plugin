@@ -119,31 +119,25 @@ func (o *OracleDriverImpl) Close(ctx context.Context) {
 }
 
 func (o *OracleDriverImpl) Ping(ctx context.Context) error {
-	o.l.Info("start ping 1")
 	conn, err := o.getConn()
 	if err != nil {
 		return err
 	}
-	o.l.Info("start ping 2")
 	if err := conn.PingContext(ctx); err != nil {
 		return errors.Wrap(err, "ping in driver adaptor")
 	}
-	o.l.Info("start ping 3")
 	return nil
 }
 
 func (o *OracleDriverImpl) Exec(ctx context.Context, sql string) (_driver.Result, error) {
-	o.l.Info("start exec 1")
 	conn, err := o.getConn()
 	if err != nil {
 		return nil, err
 	}
-	o.l.Info("start exec 2")
 	res, err := conn.ExecContext(ctx, sql)
 	if err != nil {
 		return nil, errors.Wrap(err, "exec sql in driver adaptor")
 	}
-	o.l.Info("start exec 3")
 	return res, nil
 }
 
